@@ -1,3 +1,9 @@
+var Webflow = Webflow || [];
+  Webflow.push(function() {
+    // unbind webflow form handling
+    $(document).off('submit');
+});
+
 const baseURL = "https://proxy.cloverlabs.dev/lever";
 var requestOptions = {
   method: 'GET',
@@ -27,6 +33,7 @@ back.addEventListener("click", function (e) {
 const modify_position = function(position) {
   return function curried_func(e) {
     window.scrollTo(0, 0);
+    formJobID.value = position.id;
     document.getElementsByClassName("career")[0].style.display = 'none';
     document.getElementsByClassName("open-positions-section")[0].style.display = 'none';
     document.getElementById("position-heading").innerText = position.text;
@@ -64,38 +71,86 @@ const modify_position = function(position) {
   }
 }
 
-const form = document.getElementById('application-form');
+const form = document.getElementById('application-form'),
+        formSuccess = document.getElementById('application-form-success'),
+        formFail = document.getElementById('application-form-error');
 form.addEventListener('submit', function(e){
   e.preventDefault();
+  if(!fileErr.classList.contains('hidden')) fileErr.classList.add('hidden');
+  formFail.style.display = "none";
+  let btn = document.getElementById('submit-app-btn');
+  let btnText = btn.value;
+  let btnWait = btn.getAttribute("data-wait");
   const formData = new FormData(e.target);
-  const formProps = Object.fromEntries(formData);
-  console.log(formProps);
+  let formProps = Object.fromEntries(formData);
+  delete formProps["resume-field"];
+  if(formProps.resume !== "" && formProps.fullName !== "" && formProps.email !== "") {
+    btn.value = btnWait;
+    btn.classList.add('loading');
+    submitApplication(formProps).then((response) => {
+      if (response.ok) {
+        return response.json();
+      }
+      throw new Error('Error');
+    }).then((result) => {
+      form.classList.add('hidden');
+      formSuccess.style.display = "block";
+    }).catch((error) => {
+      console.log(error);
+      btn.value = btnText;
+      btn.classList.remove('loading');
+      formFail.style.display = "block";
+    });
+  }
+  else {
+    btn.value = btnText;
+    btn.classList.remove('loading');
+    formFail.style.display = "block";
+    if(formProps.resume === "") {
+      fileErr.classList.remove('hidden');
+    }
+    if(formProps.fullName === "") {
+      document.getElementById("fullName").nextSibling.classList.remove('hidden');
+    }
+    if(formProps.email === "") {
+      document.getElementById("email-app").nextSibling.classList.remove('hidden');
+    }
+  }
 });
 
-const resume = document.getElementById("resume"),
-      fileSizeErr = document.getElementById('file-upload-oversize'),
-      fileTypeErr = document.getElementById('file-upload-type'),
-      fileErr = document.getElementById('file-upload-fail'),
-      fileSuccess = document.getElementById('file-upload-success'),
-      fileUploading = document.getElementById('file-upload-working');
+const resume = document.getElementById("resume-field"),
+        fileSizeErr = document.getElementById('file-upload-oversize'),
+        fileTypeErr = document.getElementById('file-upload-type'),
+        fileErr = document.getElementById('file-upload-fail'),
+        fileSuccess = document.getElementById('file-upload-success'),
+        fileUploading = document.getElementById('file-upload-working'),
+        fileName = document.getElementById('file-upload-filename'),
+        fileLabel = document.getElementById('field-label-default'),
+        resumeUrl = document.getElementById('resume'),
+        formJobID = document.getElementById('form-jobID');;
 
 resume.addEventListener("change", function(event) {
   var files = resume.files;
   if (files.length) {
     let file = files[0];
-    console.log(file);
-    console.log(file.type);
-    if(fileSizeErr.classList.contains('hidden')) fileSizeErr.classList.add('hidden');
-    if(fileErr.classList.contains('hidden')) fileErr.classList.add('hidden');
-    if(fileTypeErr.classList.contains('hidden')) fileTypeErr.classList.add('hidden');
-    if(fileSuccess.classList.contains('hidden')) fileSuccess.classList.add('hidden');
-    if(fileUploading.classList.contains('hidden')) fileUploading.classList.add('hidden');
+    if(!fileSizeErr.classList.contains('hidden')) fileSizeErr.classList.add('hidden');
+    if(!fileErr.classList.contains('hidden')) fileErr.classList.add('hidden');
+    if(!fileTypeErr.classList.contains('hidden')) fileTypeErr.classList.add('hidden');
+    if(!fileSuccess.classList.contains('hidden')) fileSuccess.classList.add('hidden');
+    if(!fileUploading.classList.contains('hidden')) fileUploading.classList.add('hidden');
+    if(fileLabel.classList.contains('hidden')) fileUploading.classList.remove('hidden');
+    fileName.innerText = "";
+
     let filesize = ((file.size/1024)/1024).toFixed(4); // MB
     if( (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.type === "application/pdf" || file.type === "application/msword") !== true ) {
       fileTypeErr.classList.remove('hidden');
+      resume.value = null;
+      resumeUrl.value = "";
     }
     else if(filesize > 30) {
       fileSizeErr.classList.remove('hidden');
+      resume.value = null;
+      resumeUrl.value = "";
     }
     else {
       fileUploading.classList.remove('hidden');
@@ -104,12 +159,58 @@ resume.addEventListener("change", function(event) {
       uploadFile(formData).then(response => {
         console.log(response);
         fileUploading.classList.add('hidden');
-        if(response.data.hasOwnProperty('uri')) fileSuccess.classList.remove('hidden');
-        else fileErr.classList.remove('hidden');
+        if(response.data.hasOwnProperty('uri')) {
+          fileSuccess.classList.remove('hidden');
+          fileLabel.classList.add('hidden');
+          fileName.innerText = response.data.filename;
+          resumeUrl.value = response.data.uri;
+        }
+        else {
+          fileErr.classList.remove('hidden');
+          resume.value = null;
+          resumeUrl.value = "";
+        }
       });
     }
   }
 }, false);
+
+async function submitApplication(formFields) {
+  let personal = [];
+  let urls = [];
+  for (const key in formFields) {
+    if(key === "LinkedIn" || key === "Twitter" || key === "GitHub" || key === "Portfolio" || key === "Other") {
+      if(formFields[key] !== "") {
+          urls.push({"name": key, "value": formFields[key]});
+      }
+    }
+    else {
+      if(formFields[key] !== "") {
+          personal.push({"name": key, "value": formFields[key]});
+      }
+    }
+  }
+  let data = {
+    "personalInformation": personal,
+    "source": "Datafold website"
+  };
+  if(urls.length > 0) {
+      data.urls = urls;
+  }
+  console.log(data);
+  let jobID = "ec1a54c7-8129-4503-99fb-299060b6c104";
+  let request = {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    redirect: 'follow'
+  };
+
+  const response = await fetch(`${baseURL}/postings/${jobID}/apply`, request);
+  return response;
+}
 
 async function uploadFile(file) {
   let request = {
@@ -226,8 +327,8 @@ if(window.location.hash != '') {
   document.getElementById("single-position").style.display = 'block';
   let id = window.location.hash.replace("#", "");
   fetchPosition(id).then(result => {
-    fetchPositionForm(id).then(fields => console.log(fields.data));
     let position = result.data;
+    formJobID.value = position.id;
     document.getElementById("position-heading").innerText = position.text;
     if(position.categories.team && (position.categories.location || position.commitment)) {
       document.getElementById("position-dash").style.display = "block";

@@ -127,7 +127,7 @@ const resume = document.getElementById("resume-field"),
         fileName = document.getElementById('file-upload-filename'),
         fileLabel = document.getElementById('field-label-default'),
         resumeUrl = document.getElementById('resume'),
-        formJobID = document.getElementById('form-jobID');;
+        formJobID = document.getElementById('form-jobID');
 
 resume.addEventListener("change", function(event) {
   var files = resume.files;
@@ -176,8 +176,10 @@ resume.addEventListener("change", function(event) {
 }, false);
 
 async function submitApplication(formFields) {
+  let jobID = formJobID.value;
   let personal = [];
   let urls = [];
+  
   for (const key in formFields) {
     if(key === "LinkedIn" || key === "Twitter" || key === "GitHub" || key === "Portfolio" || key === "Other") {
       if(formFields[key] !== "") {
@@ -197,8 +199,6 @@ async function submitApplication(formFields) {
   if(urls.length > 0) {
       data.urls = urls;
   }
-  console.log(data);
-  let jobID = "ec1a54c7-8129-4503-99fb-299060b6c104";
   let request = {
     method: 'POST',
     body: JSON.stringify(data),

@@ -84,14 +84,19 @@ resume.addEventListener("change", function(event) {
   if (files.length) {
     let file = files[0];
     console.log(file);
+    console.log(file.type);
     if(fileSizeErr.classList.contains('hidden')) fileSizeErr.classList.add('hidden');
     if(fileErr.classList.contains('hidden')) fileErr.classList.add('hidden');
     if(fileTypeErr.classList.contains('hidden')) fileTypeErr.classList.add('hidden');
     if(fileSuccess.classList.contains('hidden')) fileSuccess.classList.add('hidden');
     if(fileUploading.classList.contains('hidden')) fileUploading.classList.add('hidden');
     let filesize = ((file.size/1024)/1024).toFixed(4); // MB
-    if(file.type != "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && file.type != "application/pdf" && file.type != "application/msword") fileTypeErr.classList.remove('hidden');
-    else if(filesize > 30) fileSizeErr.classList.remove('hidden');
+    if( !(file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.type === "application/pdf" || file.type === "application/msword") ) {
+      fileTypeErr.classList.remove('hidden');
+    }
+    else if(filesize > 30) {
+      fileSizeErr.classList.remove('hidden');
+    }
     else {
       fileUploading.classList.remove('hidden');
       const formData = new FormData();

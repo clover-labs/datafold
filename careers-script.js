@@ -91,7 +91,7 @@ resume.addEventListener("change", function(event) {
     if(fileSuccess.classList.contains('hidden')) fileSuccess.classList.add('hidden');
     if(fileUploading.classList.contains('hidden')) fileUploading.classList.add('hidden');
     let filesize = ((file.size/1024)/1024).toFixed(4); // MB
-    if( !(file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.type === "application/pdf" || file.type === "application/msword") ) {
+    if( (file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || file.type === "application/pdf" || file.type === "application/msword") !== true ) {
       fileTypeErr.classList.remove('hidden');
     }
     else if(filesize > 30) {

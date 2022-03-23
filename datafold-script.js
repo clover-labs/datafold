@@ -97,6 +97,7 @@ var Webflow = Webflow || [];
       }).then((result) => {
         form.classList.add('hidden');
         formSuccess.style.display = "block";
+        formSuccess.scrollIntoView({behavior: "smooth", block: "start", inline: "nearest"});
       }).catch((error) => {
         console.log(error);
         btn.value = btnText;

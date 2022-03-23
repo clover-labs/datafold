@@ -85,6 +85,7 @@ var Webflow = Webflow || [];
     const formData = new FormData(e.target);
     let formProps = Object.fromEntries(formData);
     delete formProps["resume-field"];
+    delete formProps["form-jobID"];
     if(formProps.resume !== "" && formProps.fullName !== "" && formProps.email !== "") {
       btn.value = btnWait;
       btn.classList.add('loading');

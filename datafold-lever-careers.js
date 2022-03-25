@@ -112,7 +112,7 @@ Webflow.push(function() {
             catHeading.innerText = "Uncategorized";
           }
         }
-        let card = document.createElement("div");
+        let card = document.createElement("a");
         card.className = "position-card";
         let content = document.createElement("div");
         content.className = "position-card-content";
@@ -127,11 +127,11 @@ Webflow.push(function() {
         content.append(title,details);
         let button = document.createElement("div");
         button.className = "position-card-button";
-        let link = document.createElement("a");
+        let link = document.createElement("div");
         link.className = "button button-primary w-button";
         link.innerText = "Learn More";
-        link.href = "#" + array[key][j].id;
-        link.addEventListener("click", modify_position(array[key][j]));
+        card.href = "#" + array[key][j].id;
+        card.addEventListener("click", modify_position(array[key][j]));
         button.appendChild(link);
         card.append(content,button);
         container.appendChild(card);
